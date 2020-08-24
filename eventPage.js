@@ -11,11 +11,6 @@ let capitalizerFunc = clickData => {
     let temp = clickData.selectionText.toUpperCase();
     alert(temp);
     alert(document.activeElement.value);
-
-    chrome.tabs.executeScript({
-      code: 'document.activeElement.value=' + temp
-    });
-
   }
 }
 

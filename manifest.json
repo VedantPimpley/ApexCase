@@ -2,16 +2,12 @@
   "name": "Capitalizer",
   "version": "1.0",
   "manifest_version": 2,
-  "permissions": ["contextMenus","activeTab", "tabs"],
+  "permissions": [
+    "contextMenus",
+    "activeTab"
+  ],
   "background": {
-    "scripts": ["eventPage.js"],
+    "scripts": ["./background.js"],
     "persistent": false
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["contentScript.js"],
-      "run_at": "document_end"
-    }
-  ]
+  }
 }

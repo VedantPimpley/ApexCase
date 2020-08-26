@@ -9,20 +9,20 @@ chrome.contextMenus.create({
   //note that we use editable, not selection
 });
 
-//capitalize everything sub-contextMenu
-chrome.contextMenus.create({
-  id: "capitalizeAll",
-  parentId: "parentMenu",
-  title: "Capitalize entire selection",
-  type: 'normal',
-  contexts: ['editable'],
-});
-
 //undo sub-contextMenu
 chrome.contextMenus.create({
   id: "undo",
   parentId: "parentMenu",
   title: "Undo selected",
+  type: 'normal',
+  contexts: ['editable'],
+});
+
+//capitalize everything sub-contextMenu
+chrome.contextMenus.create({
+  id: "capitalizeAll",
+  parentId: "parentMenu",
+  title: "Capitalize entire selection",
   type: 'normal',
   contexts: ['editable'],
 });
@@ -46,9 +46,24 @@ chrome.contextMenus.create({
 });
 
 chrome.contextMenus.onClicked.addListener(e => {
-  if(e.selectionText && e.menuItemId === "capitalizeAll") {
-    chrome.tabs.executeScript(null, {
-      file: "./content.js"
-    });
+  if(!e.selectionText) {return null;}
+
+  switch(e.menuItemId) {
+    case "capitalizeAll":
+      chrome.tabs.executeScript(null, {
+        file: "./content.js"
+      });
+      break;
+
+    case "perWord":
+      //
+      break;
+
+    case "perSentence":
+      //
+      break;
+      
+    default:
+      return null;
   }
 });

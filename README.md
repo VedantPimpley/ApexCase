@@ -23,6 +23,6 @@ This will reveal a submenu with four options.
 
 4. **Capitalize first letter of first word in each sentence**
 
-## Licence
+## License
 
-This project is licenced under the MIT Licence.
+This project is licensed under the MIT License.

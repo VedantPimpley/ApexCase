@@ -31,7 +31,7 @@ chrome.contextMenus.create({
 chrome.contextMenus.create({
   id: "perWord",
   parentId: "parentMenu",
-  title: "Capitalize each word",
+  title: "Capitalize first letter of each word",
   type: 'normal',
   contexts: ['editable'],
 });
@@ -51,18 +51,22 @@ chrome.contextMenus.onClicked.addListener(e => {
   switch(e.menuItemId) {
     case "capitalizeAll":
       chrome.tabs.executeScript(null, {
-        file: "./content.js"
+        file: "./capitalizeAll.js"
       });
       break;
 
     case "perWord":
-      //
+      chrome.tabs.executeScript(null, {
+        file: "./perWord.js"
+      });
       break;
 
     case "perSentence":
-      //
+      chrome.tabs.executeScript(null, {
+        file: "./perSentence.js"
+      });
       break;
-      
+
     default:
       return null;
   }

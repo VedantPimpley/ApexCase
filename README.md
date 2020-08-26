@@ -15,14 +15,14 @@ The extension will appear in the Chrome Extensions tab and can be used now.
 On a page, in an input element, select the text you wish to modify. Right click on it, and hover over the 'ApexCase Capitalizer' option. 
 This will reveal a submenu with four options.
 
-1. Undo last action: Reverts the last capitalization action performed, along with any changes made to the text following that action.
+1. **Undo last action**: Reverts the last capitalization action performed, along with any changes made to the text following that action. Do note that undo can only revert the last action, and this cannot be chained.
 
-2. Capitalize entire selection: All alphabets [a-z] will be replaced by their respective upper case alphabets.
+2. **Capitalize entire selection**: All alphabets [a-z] will be replaced by their respective upper case alphabets.
 
-3. Capitalize first letter of each word
+3. **Capitalize first letter of each word**
 
-4. Capitalize first letter of each word in each sentence
+4. **Capitalize first letter of first word in each sentence**
 
 ## Licence
 
-This project (ApexCase) is licenced under the MIT Licence.
+This project is licenced under the MIT Licence.

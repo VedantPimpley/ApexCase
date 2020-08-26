@@ -7,7 +7,6 @@ function capitalizeFirstWordLetter(element) {
   let postfix = string.substring(selectionEnd);
 
   chrome.storage.local.set({prevState: string }, () => {
-    console.log('Prev state:'+ string);
     let result = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/g, function(match) { return match.toUpperCase() })
     element.value = prefix + result + postfix ;
   });

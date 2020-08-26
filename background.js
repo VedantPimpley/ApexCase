@@ -1,7 +1,11 @@
+chrome.runtime.onStartup.addListener(() => {
+  chrome.storage.local.clear();
+});
+
 //create context menu in UI
 chrome.contextMenus.create({
   id: "parentMenu",
-  title: "Capitalizer",
+  title: "ApexCase Capitalizer",
   type: 'normal',
   contexts: ['editable'],
   //note that we use editable, not selection
@@ -43,6 +47,15 @@ chrome.contextMenus.create({
   contexts: ['editable'],
 });
 
+//un-capitalize i.e. lowercase everything
+chrome.contextMenus.create({
+  id: "lowerAll",
+  parentId: "parentMenu",
+  title: "Change entire selection to lowercase",
+  type: 'normal',
+  contexts: ['editable'],
+});
+
 chrome.contextMenus.onClicked.addListener(e => {
   if(!e.selectionText && e.menuItemId !== "undo") {return null;}
 
@@ -50,6 +63,12 @@ chrome.contextMenus.onClicked.addListener(e => {
     case "capitalizeAll":
       chrome.tabs.executeScript(null, {
         file: "./capitalizeAll.js"
+      });
+      break;
+
+    case "lowerAll":
+      chrome.tabs.executeScript(null, {
+        file: "./lowerAll.js"
       });
       break;
 

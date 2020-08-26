@@ -1,4 +1,4 @@
-function capitalizeSelected(element) {
+function lowerSelected(element) {
   let {selectionStart, selectionEnd} = element;
 
   let string = element.value;
@@ -7,8 +7,8 @@ function capitalizeSelected(element) {
   let postfix = string.substring(selectionEnd);
 
   chrome.storage.local.set({prevState: string }, () => {
-    element.value = prefix + infix.toUpperCase() + postfix ;
+    element.value = prefix + infix.toLowerCase() + postfix ;
   });
 }
 
-capitalizeSelected(document.activeElement);
+lowerSelected(document.activeElement);

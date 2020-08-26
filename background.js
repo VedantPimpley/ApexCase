@@ -38,7 +38,7 @@ chrome.contextMenus.create({
 chrome.contextMenus.create({
   id: "perSentence",
   parentId: "parentMenu",
-  title: "Capitalize first word of each sentence",
+  title: "Capitalize first letter of first word in each sentence",
   type: 'normal',
   contexts: ['editable'],
 });

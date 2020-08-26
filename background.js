@@ -1,5 +1,3 @@
-console.log("from background");
-
 //create context menu in UI
 chrome.contextMenus.create({
   id: "parentMenu",
@@ -13,7 +11,7 @@ chrome.contextMenus.create({
 chrome.contextMenus.create({
   id: "undo",
   parentId: "parentMenu",
-  title: "Undo selected",
+  title: "Undo last action",
   type: 'normal',
   contexts: ['editable'],
 });
@@ -46,7 +44,7 @@ chrome.contextMenus.create({
 });
 
 chrome.contextMenus.onClicked.addListener(e => {
-  if(!e.selectionText) {return null;}
+  if(!e.selectionText && e.menuItemId !== "undo") {return null;}
 
   switch(e.menuItemId) {
     case "capitalizeAll":
@@ -64,6 +62,12 @@ chrome.contextMenus.onClicked.addListener(e => {
     case "perSentence":
       chrome.tabs.executeScript(null, {
         file: "./perSentence.js"
+      });
+      break;
+
+    case "undo":
+      chrome.tabs.executeScript(null, {
+        file: "./undo.js"
       });
       break;
 

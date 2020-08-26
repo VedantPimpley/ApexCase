@@ -6,7 +6,10 @@ function capitalizeSelected(element) {
   let infix = string.substring(selectionStart, selectionEnd);
   let postfix = string.substring(selectionEnd);
 
-  element.value = prefix + infix.toUpperCase() + postfix ;
+  chrome.storage.local.set({prevState: string }, () => {
+    console.log('Prev state:'+ string);
+    element.value = prefix + infix.toUpperCase() + postfix ;
+  });
 }
 
 capitalizeSelected(document.activeElement);

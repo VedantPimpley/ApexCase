@@ -1,11 +1,9 @@
-console.log('FROM BACKground');
-
 chrome.runtime.onStartup.addListener(() => {
   //clear data from the last browser session
   chrome.storage.local.clear();
 });
 
-//create context menu in UI
+//CREATE CONTEXT MENU OPTION IN BROWSER UI ON RIGHTCLICK
 chrome.contextMenus.create({
   id: "parentMenu",
   title: "ApexCase Capitalizer",
@@ -59,17 +57,10 @@ chrome.contextMenus.create({
   contexts: ['editable'],
 });
 
-let isScriptLoaded = false;
-
 chrome.contextMenus.onClicked.addListener(e => {
+  //text must be selected by the user, except in the case of undo action
   if(!e.selectionText && e.menuItemId !== "undo") { 
-    //text must be selected, except in the case of undo action
     return null;
-  }
-
-  if(!isScriptLoaded) {
-    chrome.tabs.executeScript(null, {file: "content.js"});
-    isScriptLoaded = true;
   }
 
   //send a message to content.js telling which action to perform on active tab

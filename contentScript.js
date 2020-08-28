@@ -9,31 +9,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+//does the actual capitalization
 function transformText(element, todo) {
   let selectionStart, selectionEnd = null;
 
   //GET SELECTION BOUNDARIES
   //if the element is of type input, textarea that has selectionStart and selectionEnd attributes
-  if (element.selectionStart) {
-    selectionStart = element.selectionStart;
-    selectionEnd = element.selectionEnd;
-  }
-  else {
-  //if the element is a div
-    selectionStart = element.anchorOffset
-    selectionEnd = element.focusOffset;
-  }
+  // if (element is input) {
+  selectionStart = element.selectionStart;
+  selectionEnd = element.selectionEnd;
+  // }
+  // else {
+  // //if the element is a div
+  //   selectionStart = element.anchorOffset
+  //   selectionEnd = element.focusOffset;
+  // }
 
   //GET TEXT ELEMENT'S CONTENT
   //element.value is for textarea and input elements; innerHTML is for div elements (contentEditable divs)
-  let string = element.value || element.innerHTML;
+  let string = element.value; 
+  //|| element.innerHTML;
   
   //SPLIT THE STRING INTO 3 PARTS
   let prefix = string.substring(0, selectionStart);
   let infix = string.substring(selectionStart, selectionEnd);
   let postfix = string.substring(selectionEnd);
   
-  //APPLY THE REQUESTED TRANSFORMATION ON THE TEXT
+  //APPLY THE REQUESTED TRANSFORMATION ON THE SELECTED TEXT
   let newInfixString = null;
   switch(todo) {
     case "capitalizeSelected":
@@ -49,20 +51,21 @@ function transformText(element, todo) {
       newInfixString = infix.replace(/(?:^|[\.\?!\s])[a-z]/g, function(match) { return match.toUpperCase() });
       break;
     default:
-      null;
       break;
   }
 
+  //APPLY CHANGES TO DOM
   //Set existing value to localStorage so it can be used to perform undo later.
-  //Apply changes to DOM.
   chrome.storage.local.set({prevState: string }, () => {
+    console.log("sS: "+selectionStart+",sE: "+selectionEnd+",pre:"+ prefix + ", post:" + postfix);
+
     if(element.value) {
       element.value = prefix + newInfixString + postfix;
     }
-    else if(element.innerHTML) {
-      console.log(prefix + newInfixString + postfix);
-      element.innerHTML = prefix + newInfixString + postfix;
-    }
+    // else if(element.innerHTML) {
+    //   console.log(prefix + newInfixString + postfix);
+    //   element.innerHTML = prefix + newInfixString + postfix;
+    // }
   });
 }
 

@@ -15,7 +15,7 @@ ApexCase is a browser extension which lets you easily change the capitalization 
 ## Usage
 
 On a webpage, go to an input element. Select the text you wish to modify. Right click on it, and hover over the 'ApexCase Capitalizer' option. 
-This will reveal a submenu with four options.
+This will reveal a submenu with five options.
 
 1. **Undo last action**: Reverts the last capitalization action performed, along with any changes made to the text following that action. Do note that undo can only revert the last action, and this cannot be chained to do multiple undos.
 
@@ -24,6 +24,8 @@ This will reveal a submenu with four options.
 3. **Capitalize first letter of each word**: Only the first letter of each word will be capitalized, leaving all the other characters as they are.
 
 4. **Capitalize first letter of first word in each sentence**: Only the first letter of the first word of each sentence will be capitalized, leaving all the other characters as they are. This is the generally the norm in English.
+
+5. **Undo last action**: Reverts the last action performed, along with any changes made to the text following that action.
 
 ## License
 

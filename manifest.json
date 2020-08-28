@@ -1,7 +1,7 @@
 {
   "name": "ApexCase Capitalizer",
-  "version": "1.0",
-  "description": "Easily change the capitalization(case) of text on the fly.",
+  "version": "0.1.0",
+  "description": "Easily change the capitalization (case) of text on the fly.",
   "manifest_version": 2,
   "icons": {
     "48": "icon48.png",

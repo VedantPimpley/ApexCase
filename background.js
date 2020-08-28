@@ -1,4 +1,7 @@
+console.log('FROM BACKground');
+
 chrome.runtime.onStartup.addListener(() => {
+  //clear data from the last browser session
   chrome.storage.local.clear();
 });
 
@@ -22,7 +25,7 @@ chrome.contextMenus.create({
 
 //capitalize everything sub-contextMenu
 chrome.contextMenus.create({
-  id: "capitalizeAll",
+  id: "capitalizeSelected",
   parentId: "parentMenu",
   title: "Capitalize entire selection",
   type: 'normal',
@@ -49,48 +52,28 @@ chrome.contextMenus.create({
 
 //un-capitalize i.e. lowercase everything
 chrome.contextMenus.create({
-  id: "lowerAll",
+  id: "lowerSelected",
   parentId: "parentMenu",
   title: "Change entire selection to lowercase",
   type: 'normal',
   contexts: ['editable'],
 });
 
+let isScriptLoaded = false;
+
 chrome.contextMenus.onClicked.addListener(e => {
-  if(!e.selectionText && e.menuItemId !== "undo") {return null;}
-
-  switch(e.menuItemId) {
-    case "capitalizeAll":
-      chrome.tabs.executeScript(null, {
-        file: "./capitalizeAll.js"
-      });
-      break;
-
-    case "lowerAll":
-      chrome.tabs.executeScript(null, {
-        file: "./lowerAll.js"
-      });
-      break;
-
-    case "perWord":
-      chrome.tabs.executeScript(null, {
-        file: "./perWord.js"
-      });
-      break;
-
-    case "perSentence":
-      chrome.tabs.executeScript(null, {
-        file: "./perSentence.js"
-      });
-      break;
-
-    case "undo":
-      chrome.tabs.executeScript(null, {
-        file: "./undo.js"
-      });
-      break;
-
-    default:
-      return null;
+  if(!e.selectionText && e.menuItemId !== "undo") { 
+    //text must be selected, except in the case of undo action
+    return null;
   }
+
+  if(!isScriptLoaded) {
+    chrome.tabs.executeScript(null, {file: "content.js"});
+    isScriptLoaded = true;
+  }
+
+  //send a message to content.js telling which action to perform on active tab
+  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, {todo:e.menuItemId});
+  });
 });

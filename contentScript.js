@@ -20,7 +20,6 @@ function transformText(element, todo) {
 
   //GET SELECTION BOUNDARIES
   //if the element is of type input, textarea that has selectionStart and selectionEnd attributes
-  
   if (elementType === "textarea" || elementType === "input") {
     selectionStart = element.selectionStart;
     selectionEnd = element.selectionEnd;
@@ -29,9 +28,14 @@ function transformText(element, todo) {
     //if the element is a div
     //divs do not have selectionStart and selectionEnd attributes
     //hence we use window.getSelection() to find the selection boundaries
-    console.log(window.getSelection().anchorOffset+" "+window.getSelection().focusOffset);
-    selectionStart = window.getSelection().anchorOffset;
-    selectionEnd = window.getSelection().focusOffset;
+    if(window.getSelection().anchorOffset < window.getSelection().focusOffset) {
+      selectionStart = window.getSelection().anchorOffset;
+      selectionEnd = window.getSelection().focusOffset;
+    }
+    else {
+      selectionEnd = window.getSelection().anchorOffset;
+      selectionStart = window.getSelection().focusOffset;
+    }
   }
 
   //GET TEXT ELEMENT'S CONTENT
@@ -60,7 +64,10 @@ function transformText(element, todo) {
       newInfixString = infix.toLowerCase();
       break;
     case "perSentence":
-      newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/g, function(match) { return match.toUpperCase() });
+      //multiline mode is enable for per sentence capitalization
+      //if a sentence begins on a newline but the previous sentence didn't end with either ?!. 
+      //then the current sentence's first word's first letter DOES get capitalized
+      newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
       break;
     case "perWord":
       newInfixString = infix.replace(/(?:^|[\.\?!\s])[a-z]/g, function(match) { return match.toUpperCase() });
@@ -81,12 +88,22 @@ function transformText(element, todo) {
       element.innerText = prefix + newInfixString + postfix;
     }
   });
+
+  //Deselect selected text in browser
+  //why? DOM loses focus of selected text (info about boundaries) after every action 
+  //but on the user's page the text selection can remain
+  //the user then may perform an action that will not work 
+  //because selectionEnd and selectionStart are not available to the extension
+  window.getSelection().removeAllRanges();
+
 }
 
 function undoLastAction(element) {
   let string = null;
+  
   //GET TEXT ELEMENT'S CONTENT
   //element.value is for textarea and input elements; innerText is for div elements (contentEditable divs)
+  let elementType = element.nodeName.toLowerCase();
   if (elementType === "textarea" || elementType === "input") {
     string = element.value;
   }
@@ -97,7 +114,7 @@ function undoLastAction(element) {
   
   chrome.storage.local.get(['prevState'], function(result) {
     if(result.prevState === undefined || result.prevState === string) {
-      alert("No actions have been taken, hence undo is not possible.")
+      alert("No new actions have been taken, hence undo is not possible.")
     }
 
     let response = true;

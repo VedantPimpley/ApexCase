@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log(request.todo);
-
+  console.log(document.activeElement);
   if(request.todo === "undo") {
     undoLastAction(document.activeElement);
   }
@@ -12,24 +12,39 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 //does the actual capitalization
 function transformText(element, todo) {
   let selectionStart, selectionEnd = null;
+  let string = null;
+
+  //identifies type of element: "div", "input", "textarea" etc.
+  let elementType = element.nodeName.toLowerCase();
+  console.log(elementType);
 
   //GET SELECTION BOUNDARIES
   //if the element is of type input, textarea that has selectionStart and selectionEnd attributes
-  // if (element is input) {
-  selectionStart = element.selectionStart;
-  selectionEnd = element.selectionEnd;
-  // }
-  // else {
-  // //if the element is a div
-  //   selectionStart = element.anchorOffset
-  //   selectionEnd = element.focusOffset;
-  // }
+  
+  if (elementType === "textarea" || elementType === "input") {
+    selectionStart = element.selectionStart;
+    selectionEnd = element.selectionEnd;
+  }
+  else {
+    //if the element is a div
+    //divs do not have selectionStart and selectionEnd attributes
+    //hence we use window.getSelection() to find the selection boundaries
+    console.log(window.getSelection().anchorOffset+" "+window.getSelection().focusOffset);
+    selectionStart = window.getSelection().anchorOffset;
+    selectionEnd = window.getSelection().focusOffset;
+  }
 
   //GET TEXT ELEMENT'S CONTENT
-  //element.value is for textarea and input elements; innerHTML is for div elements (contentEditable divs)
-  let string = element.value; 
-  //|| element.innerHTML;
-  
+  //element.value is for textarea and input elements; innerText is for div elements (contentEditable divs)
+  if (elementType === "textarea" || elementType === "input") {
+    string = element.value;
+  }
+  else {
+  //if the element is a div
+    string = element.innerText;
+    console.log(string);
+  }
+    
   //SPLIT THE STRING INTO 3 PARTS
   let prefix = string.substring(0, selectionStart);
   let infix = string.substring(selectionStart, selectionEnd);
@@ -59,21 +74,26 @@ function transformText(element, todo) {
   chrome.storage.local.set({prevState: string }, () => {
     console.log("sS: "+selectionStart+",sE: "+selectionEnd+",pre:"+ prefix + ", post:" + postfix);
 
-    if(element.value) {
+    if (elementType === "textarea" || elementType === "input") {
       element.value = prefix + newInfixString + postfix;
     }
-    // else if(element.innerHTML) {
-    //   console.log(prefix + newInfixString + postfix);
-    //   element.innerHTML = prefix + newInfixString + postfix;
-    // }
+    else {
+      element.innerText = prefix + newInfixString + postfix;
+    }
   });
 }
 
 function undoLastAction(element) {
-
+  let string = null;
   //GET TEXT ELEMENT'S CONTENT
-  //element.value is for textarea and input elements; innerHTML is for div elements (contentEditable divs)
-  let string = element.value || element.innerHTML;
+  //element.value is for textarea and input elements; innerText is for div elements (contentEditable divs)
+  if (elementType === "textarea" || elementType === "input") {
+    string = element.value;
+  }
+  else {
+  //if the element is a div
+    string = element.innerText;
+  }
   
   chrome.storage.local.get(['prevState'], function(result) {
     if(result.prevState === undefined || result.prevState === string) {
@@ -90,12 +110,13 @@ function undoLastAction(element) {
     }
 
     //Apply undo to DOM using value from localStorage
+    
     if(response) {
-      if(element.value) {
+      if(elementType === "textarea" || elementType === "input") {
         element.value = result.prevState;
       }
-      else if(element.innerHTML) {
-        element.innerHTML = result.prevState;
+      else {
+        element.innerText = result.prevState;
       }
     }
   });

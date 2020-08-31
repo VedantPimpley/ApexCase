@@ -63,14 +63,25 @@ function transformText(element, todo) {
     case "lowerSelected":
       newInfixString = infix.toLowerCase();
       break;
-    case "perSentence":
-      //multiline mode is enable for per sentence capitalization
-      //if a sentence begins on a newline but the previous sentence didn't end with either ?!. 
-      //then the current sentence's first word's first letter DOES get capitalized
-      newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
-      break;
     case "perWord":
       newInfixString = infix.replace(/(?:^|[\.\?!\s])[a-z]/g, function(match) { return match.toUpperCase() });
+      break;
+    case "perSentence":
+      //regex options can be set on the options.html page
+      chrome.storage.sync.get({ multiline: true, quotation: false}, function(options) {
+        if(options.multiline && options.quotation) {
+          newInfixString = infix.replace(/(?:^\s*|[\.\?!"]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
+        }
+        else if(options.multiline) {
+          newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
+        }
+        else if(options.quotation) {
+          newInfixString = infix.replace(/(?:^\s*|[\.\?!"]\s*)[a-z]/g, function(match) { return match.toUpperCase() });
+        }
+        else {
+          newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/g, function(match) { return match.toUpperCase() });
+        }
+      });
       break;
     default:
       break;

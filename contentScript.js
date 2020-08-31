@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-//does the actual capitalization
+//does the actual case-changing
 function transformText(element, todo) {
   let selectionStart, selectionEnd = null;
   let string = null;
@@ -78,15 +78,26 @@ function transformText(element, todo) {
 
   //APPLY CHANGES TO DOM
   //Set existing value to localStorage so it can be used to perform undo later.
-  chrome.storage.local.set({prevState: string }, () => {
-    console.log("sS: "+selectionStart+",sE: "+selectionEnd+",pre:"+ prefix + ", post:" + postfix);
+  //Check if existing value is an array. If yes, append 'string' to the array's beginning. 
+  //Else, create a new array with 'string' in it and store it in prevStates
+  //Then apply the changes to the DOM depending on element type
 
-    if (elementType === "textarea" || elementType === "input") {
-      element.value = prefix + newInfixString + postfix;
-    }
-    else {
-      element.innerText = prefix + newInfixString + postfix;
-    }
+  chrome.storage.local.get(['prevStates'], (result) => {
+    console.log(result);
+    let updatedPrevStates = Array.isArray(result.prevStates) ? [string, ...result.prevStates] : new Array(string);
+
+    chrome.storage.local.set({
+      prevStates: updatedPrevStates
+    }, () => {
+      console.log("sS: "+selectionStart+",sE: "+selectionEnd+",pre:"+ prefix + ", post:" + postfix);
+
+      if (elementType === "textarea" || elementType === "input") {
+        element.value = prefix + newInfixString + postfix;
+      }
+      else {
+        element.innerText = prefix + newInfixString + postfix;
+      }
+    });
   });
 
   //Deselect selected text in browser
@@ -95,12 +106,10 @@ function transformText(element, todo) {
   //the user then may perform an action that will not work 
   //because selectionEnd and selectionStart are not available to the extension
   window.getSelection().removeAllRanges();
-
 }
 
 function undoLastAction(element) {
   let string = null;
-  
   //GET TEXT ELEMENT'S CONTENT
   //element.value is for textarea and input elements; innerText is for div elements (contentEditable divs)
   let elementType = element.nodeName.toLowerCase();

@@ -43,7 +43,7 @@ chrome.contextMenus.create({
 chrome.contextMenus.create({
   id: "perSentence",
   parentId: "parentMenu",
-  title: "Capitalize first letter of first word in each sentence",
+  title: "Capitalize first letter of each sentence",
   type: 'normal',
   contexts: ['editable'],
 });
@@ -63,7 +63,7 @@ chrome.contextMenus.onClicked.addListener(e => {
     return null;
   }
 
-  //send a message to content.js telling which action to perform on active tab
+  //send a message to contentScript.js telling which action to perform on active tab
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
     chrome.tabs.sendMessage(tabs[0].id, {todo:e.menuItemId});
   });

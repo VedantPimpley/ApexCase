@@ -23,7 +23,7 @@ function save_options() {
 function restore_options() {
   // Use default value false for quotation and true for multiline
   chrome.storage.sync.get({
-    multiline: false,
+    multiline: true,
     quotation: false
   }, function(items) {
     document.getElementById('multiline').checked = items.multiline;

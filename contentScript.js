@@ -1,6 +1,4 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log(request.todo);
-  console.log(document.activeElement);
   if(request.todo === "undo") {
     undoLastAction(document.activeElement);
   }
@@ -16,7 +14,6 @@ function transformText(element, todo) {
 
   //identifies type of element: "div", "input", "textarea" etc.
   let elementType = element.nodeName.toLowerCase();
-  console.log(elementType);
 
   //GET SELECTION BOUNDARIES
   //if the element is of type input, textarea that has selectionStart and selectionEnd attributes
@@ -27,7 +24,9 @@ function transformText(element, todo) {
   else {
     //if the element is a div
     //divs do not have selectionStart and selectionEnd attributes
-    //hence we use window.getSelection() to find the selection boundaries
+    //hence we use window.getSelection() to find the selection boundaries.
+    //also the user can select the text in reverse order (from back to front)
+    //this if-else handles that.
     if(window.getSelection().anchorOffset < window.getSelection().focusOffset) {
       selectionStart = window.getSelection().anchorOffset;
       selectionEnd = window.getSelection().focusOffset;
@@ -46,7 +45,6 @@ function transformText(element, todo) {
   else {
   //if the element is a div
     string = element.innerText;
-    console.log(string);
   }
     
   //SPLIT THE STRING INTO 3 PARTS
@@ -68,6 +66,7 @@ function transformText(element, todo) {
       break;
     case "perSentence":
       //regex options can be set on the options.html page
+      //multiline is true by default, quotation is false by default
       chrome.storage.sync.get({ multiline: true, quotation: false}, function(options) {
         if(options.multiline && options.quotation) {
           newInfixString = infix.replace(/(?:^\s*|[\.\?!"]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
@@ -89,19 +88,17 @@ function transformText(element, todo) {
 
   //APPLY CHANGES TO DOM
   //Set existing value to localStorage so it can be used to perform undo later.
-  //Check if existing value is an array. If yes, append 'string' to the array's beginning. 
-  //Else, create a new array with 'string' in it and store it in prevStates
+  //Check if array prevStates exists (i.e. any action has been taken by now).
+  //If yes, append 'string' to the array's beginning. 
+  //Else, create a new array initialized with 'string' in it and set that to prevStates
   //Then apply the changes to the DOM depending on element type
 
   chrome.storage.local.get(['prevStates'], (result) => {
-    console.log(result);
     let updatedPrevStates = Array.isArray(result.prevStates) ? [string, ...result.prevStates] : new Array(string);
 
     chrome.storage.local.set({
       prevStates: updatedPrevStates
     }, () => {
-      console.log("sS: "+selectionStart+",sE: "+selectionEnd+",pre:"+ prefix + ", post:" + postfix);
-
       if (elementType === "textarea" || elementType === "input") {
         element.value = prefix + newInfixString + postfix;
       }
@@ -147,8 +144,7 @@ function undoLastAction(element) {
       );
     }
 
-    //Apply undo to DOM using value from localStorage
-    
+    //Apply undo to DOM using most-recent value from localStorage
     if(response) {
       if(elementType === "textarea" || elementType === "input") {
         element.value = result.prevStates[0];

@@ -63,8 +63,12 @@ chrome.contextMenus.onClicked.addListener(e => {
     return null;
   }
 
-  //send a message to contentScript.js telling which action to perform on active tab
-  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, {todo:e.menuItemId});
+  //find out which is the current tab (tabs[0].id)
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    //inject contentScript on current tab and then run a callback function
+    chrome.tabs.executeScript(tabs[0].id, {file: "contentScript.js"}, function(){
+      //send a message to contentScript.js telling which action to perform on active tab
+      chrome.tabs.sendMessage(tabs[0].id, {todo: e.menuItemId});
+    });
   });
 });

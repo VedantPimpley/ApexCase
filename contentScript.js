@@ -1,31 +1,34 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+//add message listener, it accepts 'todo' from background.js and calls serviceUserRequest()
+chrome.runtime.onMessage.addListener(serviceUserRequest);
+
+function serviceUserRequest(request, sender, sendResponse) {
   if(request.todo === "undo") {
     undoLastAction(document.activeElement);
   }
   else {
     transformText(document.activeElement, request.todo);
   }
-});
+}
 
 //does the actual case-changing
 function transformText(element, todo) {
   let selectionStart, selectionEnd = null;
   let string = null;
 
-  //identifies type of element: "div", "input", "textarea" etc.
+  //finds type of element: "div", "input", "textarea" etc.
   let elementType = element.nodeName.toLowerCase();
 
   //GET SELECTION BOUNDARIES
-  //if the element is of type input, textarea that has selectionStart and selectionEnd attributes
   if (elementType === "textarea" || elementType === "input") {
+    //if the element is of type input or textarea, they have selectionStart and selectionEnd attributes
     selectionStart = element.selectionStart;
     selectionEnd = element.selectionEnd;
   }
   else {
-    //if the element is a div
+    //if the element is a div,
     //divs do not have selectionStart and selectionEnd attributes
     //hence we use window.getSelection() to find the selection boundaries.
-    //also the user can select the text in reverse order (from back to front)
+    //Also the user can select the text in reverse order (from back to front)
     //this if-else handles that.
     if(window.getSelection().anchorOffset < window.getSelection().focusOffset) {
       selectionStart = window.getSelection().anchorOffset;
@@ -67,19 +70,22 @@ function transformText(element, todo) {
     case "perSentence":
       //regex options can be set on the options.html page
       //multiline is true by default, quotation is false by default
+      let pattern = null;
       chrome.storage.sync.get({ multiline: true, quotation: false}, function(options) {
         if(options.multiline && options.quotation) {
-          newInfixString = infix.replace(/(?:^\s*|[\.\?!"]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
+          pattern = /(?:^\s*|[\.\?!"]\s*)[a-z]/gm;
         }
         else if(options.multiline) {
-          newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/gm, function(match) { return match.toUpperCase() });
+          pattern = /(?:^\s*|[\.\?!]\s*)[a-z]/gm;
         }
         else if(options.quotation) {
-          newInfixString = infix.replace(/(?:^\s*|[\.\?!"]\s*)[a-z]/g, function(match) { return match.toUpperCase() });
+          pattern = /(?:^\s*|[\.\?!"]\s*)[a-z]/g;
         }
         else {
-          newInfixString = infix.replace(/(?:^\s*|[\.\?!]\s*)[a-z]/g, function(match) { return match.toUpperCase() });
+          pattern = /(?:^\s*|[\.\?!]\s*)[a-z]/g;
         }
+
+        newInfixString = infix.replace(pattern, function(match) { return match.toUpperCase() });
       });
       break;
     default:
@@ -87,18 +93,17 @@ function transformText(element, todo) {
   }
 
   //APPLY CHANGES TO DOM
-  //Set existing value to localStorage so it can be used to perform undo later.
-  //Check if array prevStates exists (i.e. any action has been taken by now).
-  //If yes, append 'string' to the array's beginning. 
-  //Else, create a new array initialized with 'string' in it and set that to prevStates
-  //Then apply the changes to the DOM depending on element type
-
+  //Check if array prevStates exists (i.e. any capitalization action has been taken by now).
   chrome.storage.local.get(['prevStates'], (result) => {
+    //If yes, append 'string' to the array's beginning. 
+    //If not, create a new array initialized with 'string' in it and set that to prevStates
     let updatedPrevStates = Array.isArray(result.prevStates) ? [string, ...result.prevStates] : new Array(string);
 
+    //Set updated value to localStorage so it can be used to perform undo later.
     chrome.storage.local.set({
       prevStates: updatedPrevStates
     }, () => {
+      //Then apply the changes to the DOM depending on element type
       if (elementType === "textarea" || elementType === "input") {
         element.value = prefix + newInfixString + postfix;
       }
@@ -114,6 +119,12 @@ function transformText(element, todo) {
   //the user then may perform an action that will not work 
   //because selectionEnd and selectionStart are not available to the extension
   window.getSelection().removeAllRanges();
+
+
+  //Remove listener after the work is done
+  //if we don't do this, new listeners will go on being created after every capitalization action
+  //and the corresponding function will run as many times as the number of listeners
+  chrome.runtime.onMessage.removeListener(serviceUserRequest);
 }
 
 function undoLastAction(element) {
@@ -125,7 +136,7 @@ function undoLastAction(element) {
     string = element.value;
   }
   else {
-  //if the element is a div
+    //if the element is a div
     string = element.innerText;
   }
   
@@ -154,4 +165,9 @@ function undoLastAction(element) {
       }
     }
   });
+
+  //Remove listener after the work is done
+  //if we don't do this, new listeners will go on being created after every capitalization action
+  //and the corresponding function will run as many times as the number of listeners
+  chrome.runtime.onMessage.removeListener(serviceUserRequest);
 }

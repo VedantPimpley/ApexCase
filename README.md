@@ -5,7 +5,7 @@ ApexCase is a browser extension which lets you easily change the capitalization 
 ![ApexCase](https://user-images.githubusercontent.com/57246364/91425009-33bd8780-e878-11ea-8acd-098ba45a8ac3.gif)
 
 ## Installation
-Download it from the Chrome Web Store : [In approval process]
+[Get it from the Chrome Web Store : ApexCase Capitalizer](https://chrome.google.com/webstore/detail/apexcase-capitalizer/ijoemkoipbejbfmedlellkdidiopecfg?hl=en)
 
 OR
 
@@ -47,6 +47,8 @@ This will reveal a submenu with five options.
 
 ### Popup page
 ![popup](https://user-images.githubusercontent.com/57246364/91857456-8edee800-ec85-11ea-8035-a80036324075.jpeg)
+You can always find your previous input contents in the popup.
+
 Clicking on the extension icon will reveal the popup. Here, the user can find many entries, each containing the text content of the input elements before they performed a case-change action in it. They are sorted by most recent first. While the undo feature can only go back one step, here the user can find and retrieve all their old text content from the time the browser was opened.
 
 ### Options page

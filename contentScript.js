@@ -29,7 +29,7 @@ function transformText(element, todo) {
     //div doesn't have above attributes
     //and div can have children nodes
     //hence we use getSelectionCharacterOffsetWithin() to find correct selection boundaries
-    var selOffsets = getSelectionCharacterOffsetWithin( document.activeElement )
+    let selOffsets = getSelectionCharacterOffsetWithin( document.activeElement )
     selectionStart = selOffsets.start;
     selectionEnd = selOffsets.end;
   }
@@ -65,7 +65,7 @@ function transformText(element, todo) {
     infix = string.substring(selectionStart + count1, selectionEnd + count1 + count2);
     postfix = string.substring(selectionEnd + count1 + count2);
   }
-    
+
 
   //4. APPLY THE REQUESTED TRANSFORMATION ON THE SELECTED TEXT
   let newInfixString = null;
@@ -188,16 +188,16 @@ function undoLastAction(element) {
 }
 
 function getSelectionCharacterOffsetWithin(element) {
-  var start = 0;
-  var end = 0;
-  var doc = element.ownerDocument || element.document;
-  var win = doc.defaultView || doc.parentWindow;
-  var sel;
+  let start = 0;
+  let end = 0;
+  let doc = element.ownerDocument || element.document;
+  let win = doc.defaultView || doc.parentWindow;
+  let sel;
   if (typeof win.getSelection != "undefined") {
     sel = win.getSelection();
     if (sel.rangeCount > 0) {
-        var range = win.getSelection().getRangeAt(0);
-        var preCaretRange = range.cloneRange();
+        let range = win.getSelection().getRangeAt(0);
+        let preCaretRange = range.cloneRange();
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.startContainer, range.startOffset);
         start = preCaretRange.toString().length;
@@ -205,14 +205,13 @@ function getSelectionCharacterOffsetWithin(element) {
         end = preCaretRange.toString().length;
     }
   } else if ( (sel = doc.selection) && sel.type != "Control") {
-      var textRange = sel.createRange();
-      var preCaretTextRange = doc.body.createTextRange();
+      let textRange = sel.createRange();
+      let preCaretTextRange = doc.body.createTextRange();
       preCaretTextRange.moveToElementText(element);
       preCaretTextRange.setEndPoint("EndToStart", textRange);
       start = preCaretTextRange.text.length;
       preCaretTextRange.setEndPoint("EndToEnd", textRange);
       end = preCaretTextRange.text.length;
   }
-  console.log(start + " " + end);
   return { start: start, end: end }
 }

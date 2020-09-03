@@ -1,4 +1,4 @@
-//add message listener, it accepts 'todo' from background.js and calls serviceUserRequest()
+//Add message listener. it accepts 'todo' from background.js and calls serviceUserRequest().
 chrome.runtime.onMessage.addListener(serviceUserRequest);
 
 function serviceUserRequest(request, sender, sendResponse) {
@@ -15,47 +15,59 @@ function transformText(element, todo) {
   let selectionStart, selectionEnd = null;
   let string = null;
 
-  //finds type of element: "div", "input", "textarea" etc.
+  //finds type of element: "div" (contenteditable div), "input", "textarea" etc.
   let elementType = element.nodeName.toLowerCase();
 
-  //GET SELECTION BOUNDARIES
+
+  //1. GET SELECTION BOUNDARIES
   if (elementType === "textarea" || elementType === "input") {
-    //if the element is of type input or textarea, they have selectionStart and selectionEnd attributes
+    //input or textarea elements have selectionStart and selectionEnd attributes
     selectionStart = element.selectionStart;
     selectionEnd = element.selectionEnd;
   }
   else {
-    //if the element is a div,
-    //divs do not have selectionStart and selectionEnd attributes
-    //hence we use window.getSelection() to find the selection boundaries.
-    //Also the user can select the text in reverse order (from back to front)
-    //this if-else handles that.
-    if(window.getSelection().anchorOffset < window.getSelection().focusOffset) {
-      selectionStart = window.getSelection().anchorOffset;
-      selectionEnd = window.getSelection().focusOffset;
-    }
-    else {
-      selectionEnd = window.getSelection().anchorOffset;
-      selectionStart = window.getSelection().focusOffset;
-    }
+    //div doesn't have above attributes
+    //and div can have children nodes
+    //hence we use getSelectionCharacterOffsetWithin() to find correct selection boundaries
+    var selOffsets = getSelectionCharacterOffsetWithin( document.activeElement )
+    selectionStart = selOffsets.start;
+    selectionEnd = selOffsets.end;
   }
 
-  //GET TEXT ELEMENT'S CONTENT
-  //element.value is for textarea and input elements; innerText is for div elements (contentEditable divs)
+
+  //2. GET THE ENTIRE TEXT ELEMENT'S CONTENTS
+  //textarea and input elements have element.value
   if (elementType === "textarea" || elementType === "input") {
     string = element.value;
   }
   else {
-  //if the element is a div
+  //divs have element.innerText
     string = element.innerText;
   }
     
-  //SPLIT THE STRING INTO 3 PARTS
-  let prefix = string.substring(0, selectionStart);
-  let infix = string.substring(selectionStart, selectionEnd);
-  let postfix = string.substring(selectionEnd);
-  
-  //APPLY THE REQUESTED TRANSFORMATION ON THE SELECTED TEXT
+
+  //3. SPLIT THE STRING INTO 3 PARTS
+  let prefix = string.substring(0, selectionStart); //before selection
+  let infix = string.substring(selectionStart, selectionEnd); //selection
+  let postfix = string.substring(selectionEnd); //after selection
+
+  if(elementType !== "textarea" && elementType !== "input") {
+    //In the case of divs, p, spans etc. I use a different function to get the selection [getSelectionCharacterOffsetWithin]
+    //however in this function, newline(\n) is not counted as a character of the text
+    //but innerText does count \n as a character in the text.
+    //In order to correcly match the selection borders to the innerText string,
+    //I offset the string by the number of \n characters encountered.
+
+    let count1 = (prefix.match(/\n/g) || []).length;
+    let count2 = (infix.match(/\n/g) || []).length;
+    
+    prefix = string.substring(0, selectionStart + count1);
+    infix = string.substring(selectionStart + count1, selectionEnd + count1 + count2);
+    postfix = string.substring(selectionEnd + count1 + count2);
+  }
+    
+
+  //4. APPLY THE REQUESTED TRANSFORMATION ON THE SELECTED TEXT
   let newInfixString = null;
   switch(todo) {
     case "capitalizeSelected":
@@ -84,7 +96,6 @@ function transformText(element, todo) {
         else {
           pattern = /(?:^\s*|[\.\?!]\s*)[a-z]/g;
         }
-
         newInfixString = infix.replace(pattern, function(match) { return match.toUpperCase() });
       });
       break;
@@ -92,17 +103,16 @@ function transformText(element, todo) {
       break;
   }
 
-  //APPLY CHANGES TO DOM
-  //Check if array prevStates exists (i.e. any capitalization action has been taken by now).
+
+  //5. APPLY CHANGES TO DOM
   chrome.storage.local.get(['prevStates'], (result) => {
-    //If yes, append 'string' to the array's beginning. 
-    //If not, create a new array initialized with 'string' in it and set that to prevStates
+    //Check if array 'prevStates' already exists
+      //If yes, add 'string' as the array's first element
+      //If not, create a new array 'prevStates' initialized with 'string'
     let updatedPrevStates = Array.isArray(result.prevStates) ? [string, ...result.prevStates] : new Array(string);
 
     //Set updated value to localStorage so it can be used to perform undo later.
-    chrome.storage.local.set({
-      prevStates: updatedPrevStates
-    }, () => {
+    chrome.storage.local.set({ prevStates: updatedPrevStates }, () => {
       //Then apply the changes to the DOM depending on element type
       if (elementType === "textarea" || elementType === "input") {
         element.value = prefix + newInfixString + postfix;
@@ -120,7 +130,6 @@ function transformText(element, todo) {
   //because selectionEnd and selectionStart are not available to the extension
   window.getSelection().removeAllRanges();
 
-
   //Remove listener after the work is done
   //if we don't do this, new listeners will go on being created after every capitalization action
   //and the corresponding function will run as many times as the number of listeners
@@ -129,7 +138,9 @@ function transformText(element, todo) {
 
 function undoLastAction(element) {
   let string = null;
-  //GET TEXT ELEMENT'S CONTENT
+
+
+  //1. GET TEXT ELEMENT'S CONTENT
   //element.value is for textarea and input elements; innerText is for div elements (contentEditable divs)
   let elementType = element.nodeName.toLowerCase();
   if (elementType === "textarea" || elementType === "input") {
@@ -140,6 +151,8 @@ function undoLastAction(element) {
     string = element.innerText;
   }
   
+
+  //2. CHECK UNSAFE CONDITIONS
   chrome.storage.local.get(['prevStates'], function(result) {
     if(result.prevStates[0] === undefined || result.prevStates[0] === string) {
       alert("No new actions have been taken, hence undo is not possible.")
@@ -154,7 +167,9 @@ function undoLastAction(element) {
         "If you click okay, the changes/new input in this field will be lost. Proceed?"
       );
     }
+    
 
+  //3. APPLY UNDO TO DOM
     //Apply undo to DOM using most-recent value from localStorage
     if(response) {
       if(elementType === "textarea" || elementType === "input") {
@@ -170,4 +185,34 @@ function undoLastAction(element) {
   //if we don't do this, new listeners will go on being created after every capitalization action
   //and the corresponding function will run as many times as the number of listeners
   chrome.runtime.onMessage.removeListener(serviceUserRequest);
+}
+
+function getSelectionCharacterOffsetWithin(element) {
+  var start = 0;
+  var end = 0;
+  var doc = element.ownerDocument || element.document;
+  var win = doc.defaultView || doc.parentWindow;
+  var sel;
+  if (typeof win.getSelection != "undefined") {
+    sel = win.getSelection();
+    if (sel.rangeCount > 0) {
+        var range = win.getSelection().getRangeAt(0);
+        var preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.startContainer, range.startOffset);
+        start = preCaretRange.toString().length;
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        end = preCaretRange.toString().length;
+    }
+  } else if ( (sel = doc.selection) && sel.type != "Control") {
+      var textRange = sel.createRange();
+      var preCaretTextRange = doc.body.createTextRange();
+      preCaretTextRange.moveToElementText(element);
+      preCaretTextRange.setEndPoint("EndToStart", textRange);
+      start = preCaretTextRange.text.length;
+      preCaretTextRange.setEndPoint("EndToEnd", textRange);
+      end = preCaretTextRange.text.length;
+  }
+  console.log(start + " " + end);
+  return { start: start, end: end }
 }
